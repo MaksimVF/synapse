@@ -1,0 +1,21 @@
+
+# syntax=docker/dockerfile:1
+# Dockerfile to build the matrixdotorg/synapse docker images with S3 storage provider.
+#
+# Based on the original Dockerfile but adds S3 storage provider support.
+
+FROM matrixdotorg/synapse:latest
+
+# Install the S3 storage provider
+RUN pip install synapse-s3-storage-provider
+
+# Copy the start script and configuration
+COPY ./docker/start.py /start.py
+COPY ./docker/conf /conf
+
+EXPOSE 8008/tcp 8009/tcp 8448/tcp
+
+ENTRYPOINT ["/start.py"]
+
+HEALTHCHECK --start-period=5s --interval=15s --timeout=5s \
+  CMD curl -fSs http://localhost:8008/health || exit 1
