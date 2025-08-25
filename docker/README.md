@@ -9,6 +9,30 @@ Note that Docker's WS1-backend Linux Containers on Windows
 platform is [experimental](https://github.com/docker/for-win/issues/6470) and
 is not supported by this image.
 
+## Available Setups
+
+### 1. Media Optimization
+
+- **Directory**: `docker/`
+- **Files**:
+  - `Dockerfile-media-optimized`
+  - `docker-compose-media-optimized.yml`
+  - `homeserver-media-optimized.yaml`
+- **Features**:
+  - Media compression (JPEG/PNG)
+  - Media deduplication
+  - Thumbnail generation
+  - EXIF metadata extraction
+
+### 2. Basic Setup
+
+- **Directory**: `docker/`
+- **Files**:
+  - `Dockerfile`
+  - `docker-compose.yml`
+  - `homeserver.yaml`
+- **Features**: Standard Synapse installation
+
 ## Volumes
 
 By default, the image expects a single volume, located at `/data`, that will hold:

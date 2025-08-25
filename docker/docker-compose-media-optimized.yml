@@ -1,0 +1,46 @@
+
+
+version: '3.8'
+
+services:
+  synapse:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile-media-optimized
+    image: synapse-media-optimized:latest
+    container_name: synapse-media-optimized
+    volumes:
+      - ./data:/data
+      - ./conf/homeserver-media-optimized.yaml:/data/homeserver.yaml
+      - ./conf/homeserver.log.config:/data/homeserver.log.config
+    ports:
+      - "8008:8008"
+    environment:
+      - SYNAPSE_SERVER_NAME=localhost
+      - SYNAPSE_REPORT_STATS=no
+    restart: unless-stopped
+
+  # Optional: Redis for caching (uncomment if needed)
+  # redis:
+  #   image: redis:alpine
+  #   container_name: synapse-redis
+  #   volumes:
+  #     - ./data/redis:/data
+  #   restart: unless-stopped
+
+  # Optional: PostgreSQL database (uncomment if needed)
+  # database:
+  #   image: postgres:alpine
+  #   container_name: synapse-postgres
+  #   environment:
+  #     - POSTGRES_USER=synapse
+  #     - POSTGRES_PASSWORD=your_password_here
+  #     - POSTGRES_DB=synapse
+  #   volumes:
+  #     - ./data/postgres:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+volumes:
+  synapse-data:
+
+

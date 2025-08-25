@@ -992,6 +992,35 @@ class MediaRepositoryStore(MediaRepositoryBackgroundUpdateStore):
             "delete_url_cache_media", _delete_url_cache_media_txn
         )
 
+    async def get_media_by_hash(self, sha256: str) -> Optional[Any]:
+        """Get media by its SHA256 hash.
+
+        Returns:
+            Media record if found, None otherwise.
+        """
+
+        def _get_media_by_hash_txn(txn: LoggingTransaction) -> Optional[Any]:
+            txn.execute(
+                "SELECT * FROM local_media_repository WHERE sha256 = ?",
+                (sha256,)
+            )
+            row = txn.fetchone()
+            return row
+
+        return await self.db_pool.runInteraction(
+            "get_media_by_hash", _get_media_by_hash_txn
+        )
+
+    async def store_media_hash(self, media_id: str, sha256: str) -> None:
+        """Store the SHA256 hash for a media file."""
+
+        await self.db_pool.simple_update(
+            "local_media_repository",
+            {"sha256": sha256},
+            {"media_id": media_id},
+            desc="store_media_hash",
+        )
+
     async def get_is_hash_quarantined(self, sha256: str) -> bool:
         """Get whether a specific sha256 hash digest matches any quarantined media.
 

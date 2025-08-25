@@ -1,0 +1,30 @@
+
+# Synapse requirements with media optimization dependencies
+
+# Core dependencies
+matrix-synapse
+pillow
+psycopg2-binary
+pysaml2
+lxml
+service-identity
+pyyaml
+pyasn1
+pyasn1-modules
+netaddr
+pynacl
+bcrypt
+pydantic
+phonenumbers
+ijson
+msgpack
+sortedcontainers
+prometheus-client
+sentry-sdk
+opentracing
+jaeger-client
+pyjwt[crypto]
+cryptography
+hiredis
+unpaddedbase64
+matrix-common

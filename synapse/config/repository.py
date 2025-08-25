@@ -301,3 +301,9 @@ class ContentRepositoryConfig(Config):
         assert data_dir_path is not None
         media_store = os.path.join(data_dir_path, "media_store")
         return f"media_store_path: {media_store}"
+
+    # Media processing configuration
+    self.enable_media_compression = config.get("enable_media_compression", True)
+    self.enable_media_deduplication = config.get("enable_media_deduplication", True)
+    self.enable_thumbnail_generation = config.get("enable_thumbnail_generation", True)
+    self.image_compression_quality = config.get("image_compression_quality", 85)

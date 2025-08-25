@@ -26,6 +26,12 @@ import shutil
 from io import BytesIO
 from typing import IO, TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
+from synapse.media.media_processing import (
+    compress_image,
+    generate_thumbnail,
+    get_media_hash,
+)
+
 import attr
 from matrix_common.types.mxc_uri import MXCUri
 
@@ -324,12 +330,39 @@ class MediaRepository:
         if media_id is None:
             media_id = random_string(24)
 
+        # Read the content data for processing
+        content_data = content.read()
+
+        # Media deduplication: check if we already have this content
+        if self.hs.config.media.enable_media_deduplication:
+            content_hash = get_media_hash(content_data)
+            existing_media = await self.store.get_media_by_hash(content_hash)
+            if existing_media:
+                logger.info("Found duplicate media with hash %s, returning existing media", content_hash)
+                return MXCUri(self.server_name, existing_media.media_id)
+
+        # Media compression for images
+        if self.hs.config.media.enable_media_compression and media_type.startswith('image/'):
+            if media_type in ['image/jpeg', 'image/png']:
+                content_data = compress_image(content_data, quality=self.hs.config.media.image_compression_quality)
+                content_length = len(content_data)
+                # Reset content to the compressed data
+                content = BytesIO(content_data)
+
+        # Reset content to the beginning for storage
+        if not isinstance(content, BytesIO):
+            content = BytesIO(content_data)
+
         file_info = FileInfo(server_name=None, file_id=media_id)
         sha256reader = SHA256TransparentIOReader(content)
         # This implements all of IO as it has a passthrough
         fname = await self.media_storage.store_file(sha256reader.wrap(), file_info)
         sha256 = sha256reader.hexdigest()
         should_quarantine = await self.store.get_is_hash_quarantined(sha256)
+
+        # Store media hash for deduplication
+        if self.hs.config.media.enable_media_deduplication:
+            await self.store.store_media_hash(media_id, sha256)
 
         logger.info("Stored local media in file %r", fname)
 

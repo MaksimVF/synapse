@@ -1,0 +1,135 @@
+
+# Sample Synapse configuration with media optimization features enabled
+
+# Media optimization configuration
+media:
+  # Enable media compression (reduces file size for images)
+  enable_media_compression: true
+
+  # Enable media deduplication (avoids storing duplicate files)
+  enable_media_deduplication: true
+
+  # Enable thumbnail generation
+  enable_thumbnail_generation: true
+
+  # Image compression quality (1-100, higher is better quality but larger file)
+  image_compression_quality: 85
+
+  # Other media settings
+  max_upload_size: "50M"
+  max_image_pixels: "32M"
+  dynamic_thumbnails: true
+  thumbnail_sizes:
+    - width: 32
+      height: 32
+      method: crop
+    - width: 96
+      height: 96
+      method: crop
+    - width: 320
+      height: 240
+      method: scale
+    - width: 640
+      height: 480
+      method: scale
+    - width: 800
+      height: 600
+      method: scale
+
+# Database configuration
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+
+# Server configuration
+server_name: "localhost"
+pid_file: /data/homeserver.pid
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# Logging configuration
+log_config: "/data/homeserver.log.config"
+
+# Media storage configuration
+media_store_path: /data/media_store
+
+# Enable registration (for testing only)
+enable_registration: true
+
+# Reporting configuration
+report_stats: false
+
+# URL preview configuration
+url_preview_enabled: true
+url_preview_ip_range_blacklist:
+  - '127.0.0.0/8'
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+  - '100.64.0.0/10'
+  - '169.254.0.0/16'
+  - '::1/128'
+  - 'fe80::/64'
+  - 'fc00::/7'
+
+# Rate limiting configuration
+rc_messages_per_second: 0.2
+rc_message_burst_count: 10.0
+
+# Presence configuration
+presence:
+  enabled: true
+
+# Search configuration
+search:
+  enabled: true
+
+# Admin contact
+admin_contact: 'mailto:admin@localhost'
+
+# Metrics configuration
+enable_metrics: false
+
+# Signing key configuration
+signing_key_path: "/data/homeserver.signing.key"
+
+# Trust configuration
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+# Password configuration
+password_config:
+  enabled: true
+
+# Registration configuration
+registration_shared_secret: "your_shared_secret_here"
+
+# Turn configuration
+turn_uris: []
+turn_shared_secret: "your_turn_secret"
+turn_user_lifetime: "1h"
+turn_allow_guests: true
+
+# Macaroon configuration
+macaroon_secret_key: "your_macaroon_secret_here"
+
+# Form secret
+form_secret: "your_form_secret_here"
+
+# Redis configuration (if using)
+#redis:
+#  enabled: false
+#  host: localhost
+#  port: 6379
+
+# Worker configuration (if using)
+#workers:
+#  enabled: false
+

@@ -1,0 +1,27 @@
+
+
+
+version: '3.8'
+
+services:
+  synapse:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: synapse:latest
+    container_name: synapse
+    volumes:
+      - ./data:/data
+      - ./conf/homeserver.yaml:/data/homeserver.yaml
+      - ./conf/homeserver.log.config:/data/homeserver.log.config
+    ports:
+      - "8008:8008"
+    environment:
+      - SYNAPSE_SERVER_NAME=localhost
+      - SYNAPSE_REPORT_STATS=no
+    restart: unless-stopped
+
+volumes:
+  synapse-data:
+
+
