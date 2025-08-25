@@ -220,10 +220,5 @@ modules:
       lk_jwt_service_url: "http://livekit-jwt-service:8080"
       livekit_api_key: "your-livekit-api-key"
       livekit_api_secret: "your-livekit-api-secret"
-EOF >> /workspace/synapse/docker/conf/homeserver-with-bridges.yaml
+      livekit_server_url: "http://livekit:7880"
 
-  - module: "synapse.modules.livekit_auth.LiveKitAuthModule"
-    config:
-      lk_jwt_service_url: "http://livekit-jwt-service:8080"
-      livekit_api_key: "your-livekit-api-key"
-      livekit_api_secret: "your-livekit-api-secret"

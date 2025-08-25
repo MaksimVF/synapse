@@ -1,0 +1,143 @@
+
+
+
+
+
+version: '3.7'
+
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: synapse
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_SERVER_NAME=your.domain.com
+      - SYNAPSE_REPORT_STATS=yes
+      - SYNAPSE_ENABLE_REGISTRATION=yes
+      - SYNAPSE_TURN_URIS=turn:turn.your.domain.com?transport=udp,turn:turn.your.domain.com?transport=tcp
+      - SYNAPSE_TURN_SECRET=your-turn-secret
+    volumes:
+      - synapse-data:/data
+      - ./conf/homeserver-with-bridges.yaml:/conf/homeserver-with-bridges.yaml
+      - ./conf/appservices:/data/appservices
+    ports:
+      - "8008:8008"
+      - "8448:8448"
+    command: ["python", "/start.py", "migrate_config"]
+
+  telegram-bridge:
+    image: dock.mau.dev/mautrix/telegram:latest
+    container_name: telegram-bridge
+    restart: unless-stopped
+    environment:
+      - MAUTRIX_TELEGRAM_API_ID=your-telegram-api-id
+      - MAUTRIX_TELEGRAM_API_HASH=your-telegram-api-hash
+      - MAUTRIX_TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+      - MAUTRIX_TELEGRAM_HOMESERVER_URL=http://synapse:8008
+      - MAUTRIX_TELEGRAM_APP_SERVICE_TOKEN=your-telegram-as-token
+      - MAUTRIX_TELEGRAM_APP_SERVICE_BOT_USERNAME=telegram_bot
+    volumes:
+      - telegram-data:/data
+
+  whatsapp-bridge:
+    image: dock.mau.dev/mautrix/whatsapp:latest
+    container_name: whatsapp-bridge
+    restart: unless-stopped
+    environment:
+      - MAUTRIX_WHATSAPP_HOMESERVER_URL=http://synapse:8008
+      - MAUTRIX_WHATSAPP_APP_SERVICE_TOKEN=your-whatsapp-as-token
+      - MAUTRIX_WHATSAPP_APP_SERVICE_BOT_USERNAME=whatsapp_bot
+    volumes:
+      - whatsapp-data:/data
+
+  turn-server:
+    image: coturn/coturn:latest
+    container_name: turn-server
+    restart: unless-stopped
+    environment:
+      - TURN_SECRET=your-turn-secret
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+    command:
+      - --min-port=49152
+      - --max-port=65535
+      - --log-file=stdout
+      - --verbose
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=$(TURN_SECRET)
+      - --realm=your.domain.com
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_KEYS=your-livekit-api-key:your-livekit-api-secret
+      - LIVEKIT_TURN_ENABLED=true
+      - LIVEKIT_TURN_DOMAIN=turn.your.domain.com
+      - LIVEKIT_TURN_STATIC_AUTH_SECRET=your-turn-secret
+    ports:
+      - "7880:7880"  # HTTP API
+      - "7881:7881"  # WebSocket
+      - "7882:7882"  # RTC - TCP
+      - "7882:7882/udp"  # RTC - UDP
+
+  livekit-jwt-service:
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    container_name: livekit-jwt-service
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_API_KEY=your-livekit-api-key
+      - LIVEKIT_API_SECRET=your-livekit-api-secret
+      - JWT_EXPIRATION=24h
+    ports:
+      - "8080:8080"
+
+  livekit-proxy:
+    build: ./livekit-proxy
+    container_name: livekit-proxy
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_JWT_SERVICE_URL=http://livekit-jwt-service:8080
+      - LIVEKIT_API_KEY=your-livekit-api-key
+      - LIVEKIT_API_SECRET=your-livekit-api-secret
+    ports:
+      - "5000:5000"
+
+  element-call:
+    image: ghcr.io/element-hq/element-call:latest
+    container_name: element-call
+    restart: unless-stopped
+    environment:
+      - REACT_APP_DEFAULT_SERVER=https://your.domain.com
+      - REACT_APP_DEFAULT_HS_URL=https://your.domain.com
+      - REACT_APP_DEFAULT_IS_URL=https://your.domain.com
+      - REACT_APP_LIVEKIT_URL=ws://livekit:7881
+    ports:
+      - "8081:80"
+
+  postgres:
+    image: postgres:13
+    container_name: synapse-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=your-postgres-password
+      - POSTGRES_DB=synapse
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  synapse-data:
+  postgres-data:
+  telegram-data:
+  whatsapp-data:
+
+
+
+
+

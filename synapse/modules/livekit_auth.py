@@ -35,6 +35,7 @@ class LiveKitAuthModule:
             "lk_jwt_service_url": config.get("lk_jwt_service_url", "http://lk-jwt-service:8080"),
             "livekit_api_key": config.get("livekit_api_key", ""),
             "livekit_api_secret": config.get("livekit_api_secret", ""),
+            "livekit_server_url": config.get("livekit_server_url", "http://livekit:7880"),
         }
 
     def __init__(self, config: Dict[str, Any], api: ModuleApi):
