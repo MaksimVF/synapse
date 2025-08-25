@@ -1,0 +1,18 @@
+
+
+
+# Telegram bridge application service configuration
+id: telegram
+url: http://telegram-bridge:29328
+as_token: "your-telegram-as-token"
+hs_token: "your-telegram-hs-token"
+sender_localpart: telegram_bot
+namespaces:
+  users:
+    - exclusive: true
+      regex: "@telegram_.*"
+  aliases: []
+  rooms: []
+
+
+

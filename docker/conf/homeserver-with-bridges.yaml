@@ -170,8 +170,11 @@ report_stats: False
 
 ## API Configuration ##
 
-{% if SYNAPSE_APPSERVICES %}
 app_service_config_files:
+  - "/data/appservices/telegram.yaml"
+  - "/data/appservices/whatsapp.yaml"
+
+{% if SYNAPSE_APPSERVICES %}
 {% for appservice in SYNAPSE_APPSERVICES %}    - "{{ appservice }}"
 {% endfor %}
 {% endif %}
@@ -212,19 +215,3 @@ modules:
       turn_shared_secret: "your-turn-secret"
       turn_user_lifetime: "1h"
       turn_allow_guests: true
-
-  - module: "synapse.modules.telegram_bridge.TelegramBridge"
-    config:
-      enabled: true
-      api_id: "your-telegram-api-id"
-      api_hash: "your-telegram-api-hash"
-      bot_token: "your-telegram-bot-token"
-      phone_number: "+1234567890"
-
-  - module: "synapse.modules.whatsapp_bridge.WhatsAppBridge"
-    config:
-      enabled: true
-      api_url: "https://api.whatsapp.com"
-      api_key: "your-whatsapp-api-key"
-      phone_number: "+1234567890"
-
