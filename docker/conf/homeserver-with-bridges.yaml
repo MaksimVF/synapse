@@ -215,3 +215,15 @@ modules:
       turn_shared_secret: "your-turn-secret"
       turn_user_lifetime: "1h"
       turn_allow_guests: true
+  - module: "synapse.modules.livekit_auth.LiveKitAuthModule"
+    config:
+      lk_jwt_service_url: "http://livekit-jwt-service:8080"
+      livekit_api_key: "your-livekit-api-key"
+      livekit_api_secret: "your-livekit-api-secret"
+EOF >> /workspace/synapse/docker/conf/homeserver-with-bridges.yaml
+
+  - module: "synapse.modules.livekit_auth.LiveKitAuthModule"
+    config:
+      lk_jwt_service_url: "http://livekit-jwt-service:8080"
+      livekit_api_key: "your-livekit-api-key"
+      livekit_api_secret: "your-livekit-api-secret"
