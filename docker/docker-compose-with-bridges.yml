@@ -1,0 +1,60 @@
+
+
+version: '3.7'
+
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: synapse
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_SERVER_NAME=your.domain.com
+      - SYNAPSE_REPORT_STATS=yes
+      - SYNAPSE_ENABLE_REGISTRATION=yes
+      - SYNAPSE_TURN_URIS=turn:turn.your.domain.com?transport=udp,turn:turn.your.domain.com?transport=tcp
+      - SYNAPSE_TURN_SECRET=your-turn-secret
+    volumes:
+      - synapse-data:/data
+      - ./conf/homeserver-with-bridges.yaml:/conf/homeserver-with-bridges.yaml
+    ports:
+      - "8008:8008"
+      - "8448:8448"
+    command: ["python", "/start.py", "migrate_config"]
+
+  turn-server:
+    image: coturn/coturn:latest
+    container_name: turn-server
+    restart: unless-stopped
+    environment:
+      - TURN_SECRET=your-turn-secret
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+    command:
+      - --min-port=49152
+      - --max-port=65535
+      - --log-file=stdout
+      - --verbose
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=$(TURN_SECRET)
+      - --realm=your.domain.com
+
+  postgres:
+    image: postgres:13
+    container_name: synapse-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=your-postgres-password
+      - POSTGRES_DB=synapse
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  synapse-data:
+  postgres-data:
+
+
