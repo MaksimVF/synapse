@@ -1,0 +1,127 @@
+
+version: '3.8'
+
+services:
+  synapse:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile-s3
+    image: synapse-s3:latest
+    container_name: synapse
+    volumes:
+      - ./data:/data
+      - ./conf/homeserver-s3.yaml:/data/homeserver.yaml
+      - ./conf/homeserver.log.config:/data/homeserver.log.config
+      - ./conf/appservices:/data/appservices
+    ports:
+      - "8008:8008"
+      - "8448:8448"
+    environment:
+      - SYNAPSE_SERVER_NAME=your.domain.com
+      - SYNAPSE_REPORT_STATS=no
+    restart: unless-stopped
+    depends_on:
+      - turn-server
+      - livekit
+      - telegram-bridge
+      - whatsapp-bridge
+
+  telegram-bridge:
+    image: dock.mau.dev/mautrix/telegram:latest
+    container_name: telegram-bridge
+    restart: unless-stopped
+    environment:
+      - MAUTRIX_TELEGRAM_API_ID=${MAUTRIX_TELEGRAM_API_ID}
+      - MAUTRIX_TELEGRAM_API_HASH=${MAUTRIX_TELEGRAM_API_HASH}
+      - MAUTRIX_TELEGRAM_BOT_TOKEN=${MAUTRIX_TELEGRAM_BOT_TOKEN}
+      - MAUTRIX_TELEGRAM_HOMESERVER_URL=http://synapse:8008
+      - MAUTRIX_TELEGRAM_APP_SERVICE_TOKEN=${MAUTRIX_TELEGRAM_APP_SERVICE_TOKEN}
+      - MAUTRIX_TELEGRAM_APP_SERVICE_BOT_USERNAME=telegram_bot
+    volumes:
+      - telegram-data:/data
+
+  whatsapp-bridge:
+    image: dock.mau.dev/mautrix/whatsapp:latest
+    container_name: whatsapp-bridge
+    restart: unless-stopped
+    environment:
+      - MAUTRIX_WHATSAPP_HOMESERVER_URL=http://synapse:8008
+      - MAUTRIX_WHATSAPP_APP_SERVICE_TOKEN=${MAUTRIX_WHATSAPP_APP_SERVICE_TOKEN}
+      - MAUTRIX_WHATSAPP_APP_SERVICE_BOT_USERNAME=whatsapp_bot
+    volumes:
+      - whatsapp-data:/data
+
+  turn-server:
+    image: coturn/coturn:latest
+    container_name: turn-server
+    restart: unless-stopped
+    environment:
+      - TURN_SECRET=${SYNAPSE_TURN_SECRET}
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+    command:
+      - --min-port=49152
+      - --max-port=65535
+      - --log-file=stdout
+      - --verbose
+      - --fingerprint
+      - --use-auth-secret
+      - --static-auth-secret=$(TURN_SECRET)
+      - --realm=your.domain.com
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_KEYS=${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}
+      - LIVEKIT_TURN_ENABLED=true
+      - LIVEKIT_TURN_DOMAIN=turn.your.domain.com
+      - LIVEKIT_TURN_STATIC_AUTH_SECRET=${SYNAPSE_TURN_SECRET}
+    ports:
+      - "7880:7880"  # HTTP API
+      - "7881:7881"  # WebSocket
+      - "7882:7882"  # RTC - TCP
+      - "7882:7882/udp"  # RTC - UDP
+
+  livekit-jwt-service:
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    container_name: livekit-jwt-service
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - JWT_EXPIRATION=24h
+    ports:
+      - "8080:8080"
+
+  livekit-proxy:
+    build: ./livekit-proxy
+    container_name: livekit-proxy
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_JWT_SERVICE_URL=http://livekit-jwt-service:8080
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+    ports:
+      - "5000:5000"
+
+  element-call:
+    image: ghcr.io/element-hq/element-call:latest
+    container_name: element-call
+    restart: unless-stopped
+    environment:
+      - REACT_APP_DEFAULT_SERVER=https://your.domain.com
+      - REACT_APP_DEFAULT_HS_URL=https://your.domain.com
+      - REACT_APP_DEFAULT_IS_URL=https://your.domain.com
+      - REACT_APP_LIVEKIT_URL=ws://livekit:7881
+    ports:
+      - "8081:80"
+
+volumes:
+  synapse-data:
+  telegram-data:
+  whatsapp-data:
